@@ -55,8 +55,8 @@ const authenticate = async (req, res) => {
 };
 
 // inicia CRUD functions
-// Crear un nuevo usuario POST /api/users
 
+// Crear un nuevo usuario POST /api/users
 const createUser = async (req, res) => {
   // endpoint para crear un usuario
 
@@ -66,14 +66,23 @@ const createUser = async (req, res) => {
     const _userCURP = await User.exists({
       curp: cuerpoRequest.curp,
     });
-    const _userPassword = await User.exists({
-      password: cuerpoRequest.password,
+    // const _userPassword = await User.exists({
+    //   password: cuerpoRequest.password,
+    // });
+    const _userCorreo = await User.exists({
+      correoElectronico: cuerpoRequest.correoElectronico,
     });
+    console.log("inicia logicas de validacion");
 
-    if (_userCURP) {
+    if (_userCURP != undefined || _userCorreo != undefined) {
+      // alerta de mensaje de que el usuario ya existe
+      console.log(err);
+      // alert("El CURP o el Correo ya existen");
+
       return res.status(400).json({
         ok: false,
         message: "El usuario ya existe",
+        // mandar ventana de alerta de que el usuario ya existe
       });
     } else {
       // Verificar si alguno de los campos requeridos está vacío
@@ -235,6 +244,23 @@ const asignarCurso = async (req, res) => {
   }
 };
 
+const recoverPassword = async (req, res) => {
+  try {
+    const { correoElectronico } = req.body;
+    const user = await User.findOne({ correoElectronico });
+    if (user) {
+      res.status(200).json({
+        message: "Se ha enviado un correo para recuperar tu contraseña",
+        // aquí enviar correo con enlace para recuperar contraseña
+      });
+    } else {
+      res.status(404).json({ message: "Usuario no encontrado" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error al recuperar contraseña", error });
+  }
+};
+
 //endpoints
 const router = express.Router();
 
@@ -252,6 +278,7 @@ router
 router.route("/:id/:cursoid").put(asignarCurso);
 
 router.route("/authenticate").post(authenticate);
+router.route("/recover-password").post(recoverPassword);
 
 // authenticate debe de llevar un body con username y password
 

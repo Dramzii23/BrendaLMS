@@ -3,6 +3,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 
+const sendRecoveryEmail = require("../Utilities/sendRecoveryEmail");
+
 const Admin = require("../models/admin");
 
 const { default: mongoose } = require("mongoose");
@@ -103,12 +105,14 @@ const ejemploCreateAdmin = `{
 const authenticate = async (req, res) => {
   let cuerpoRequest = req.body; //mensaje que me envía el cliente para autenticar ej. {username:
 
-  const _user = await User.findOne({ username: cuerpoRequest.username });
+  const _user = await Admin.findOne({
+    correoElectronico: cuerpoRequest.correoElectronico,
+  });
   if (_user) {
     console.log("Usuario encontrado");
     let passwordGuardado = _user.password;
     bcrypt.compare(cuerpoRequest.password, passwordGuardado, (err, result) => {
-      if (result === false) {
+      if (result != true) {
         return res.status(401).json({
           message: "Usuario o contraseña incorrectos",
         });
@@ -204,11 +208,69 @@ const borrarAdmin = async (req, res) => {
   }
 };
 
+const recoverPassword = async (req, res) => {
+  try {
+    const { correoElectronico } = req.body;
+    const user = await Admin.findOne({ correoElectronico });
+    if (user) {
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "1h",
+      });
+
+      await sendRecoveryEmail(correoElectronico, token);
+      res.status(200).json({
+        message: "Se ha enviado un correo para recuperar tu contraseña",
+      });
+    } else {
+      res.status(404).json({ message: "Usuario no encontrado" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error al recuperar contraseña", error });
+  }
+};
+
+// Reset password
+const resetPassword = async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await Admin.findById(decoded.id);
+
+    if (user) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user.password = hashedPassword;
+      await user.save();
+      res.status(200).json({ message: "Contraseña restablecida con éxito" });
+    } else {
+      res.status(400).json({ message: "Token inválido o expirado" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error al restablecer contraseña", error });
+  }
+};
+
 // Endpoints
 const router = express.Router();
 
 router.route("/").get(obtenerAdmins).post(createAdmin);
 
 router.route("/:id").get(obtenerAdmin).put(editarAdmin).delete(borrarAdmin);
+
+router.route("/authenticate").post(authenticate);
+router.route("/recover-password").post(recoverPassword);
+router.route("/reset-password/:token").post(resetPassword);
+
+// module.exports = {
+//   createAdmin,
+//   authenticate,
+//   obtenerAdmins,
+//   obtenerAdmin,
+//   editarAdmin,
+//   borrarAdmin,
+//   recoverPassword,
+//   resetPassword,
+// };
 
 module.exports = router;
