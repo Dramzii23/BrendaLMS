@@ -19,6 +19,10 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+
+
+
+
 const Curso = require("../models/curso");
 // inicia CRUD functions
 // Crear un nuevo curso POST /api/cursos
@@ -41,6 +45,9 @@ const createCurso = async (req, res) => {
         horario: cuerpoRequest.horario,
         examenes: cuerpoRequest.examenes,
         tests: cuerpoRequest.tests,
+        instructor: cuerpoRequest.instructor,
+        fecha_de_publicacion: cuerpoRequest.fecha_de_publicacion,
+        alumnos: cuerpoRequest.alumnos
       });
 
       await Curso_Object_New.save().then((createdCurso) => {
@@ -57,8 +64,26 @@ const createCurso = async (req, res) => {
       });
     }
   } catch (error) {
+    console.log(
+      "Error al crear el curso",
+      error
+    );
+    
     res.status(500).json({ message: "Error al crear el curso", error });
   }
+};
+// Ejemplo crear curso
+const curso = {
+  "titulo": "Curso de Node.js",
+  "descripcion": "Aprende Node.js desde cero",
+  "contenido": "Contenido del curso",
+  "creditos": 5,
+  "horario": "Lunes a Viernes de 9 a 12",
+  "examenes": "Exámenes del curso",
+  "tests": "Tests del curso",
+  "instructor": "Juan Pérez",
+  "fecha_de_publicacion": new Date(),
+  "alumnos": ["Alumno1", "Alumno2"]
 };
 
 // Obtener todos los cursos GET /api/cursos
@@ -124,8 +149,13 @@ const borrarCurso = async (req, res) => {
 // Endpoints
 const router = express.Router();
 
-router.route("/").get(obtenerCursos).post(createCurso);
+router.route("/")
+    .get(obtenerCursos)
+    .post(createCurso);
 
-router.route("/:id").get(obtenerCurso).put(editarCurso).delete(borrarCurso);
+router.route("/:id")
+    .get(obtenerCurso)
+    .put(editarCurso)
+    .delete(borrarCurso);
 
 module.exports = router;

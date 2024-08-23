@@ -7,7 +7,8 @@ const cursoSchema = new mongoose.Schema({
   },
   descripcion: {
     type: String,
-    required: [true, "La descripción es obligatoria"],
+    default: "Descripción no asignada",
+    // required: [true, "La descripción es obligatoria"],
   },
   contenido: {
     type: String,
@@ -28,6 +29,20 @@ const cursoSchema = new mongoose.Schema({
   tests: {
     type: String,
     required: [true, "Los tests son obligatorios"],
+  },
+  instructor: {
+    type: String,
+    default: "Instructor no asignado",
+
+  },
+  fecha_de_publicacion: {
+    type: Date,
+    default: Date.now,
+  },
+  alumnos: {
+    type: [String],
+    default: [],
+   
   },
 });
 
