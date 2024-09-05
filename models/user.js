@@ -31,8 +31,9 @@ const userSchema = mongoose.Schema({
   },
   rol: {
     type: String,
-    enum: ["Alumno", "Instructor"],
+    enum: ["Alumno", "Instructor","Admin"],
     required: [true, "El rol es obligatorio"],
+
   },
   calificaciones: {
     type: [Number],
@@ -50,6 +51,8 @@ const userSchema = mongoose.Schema({
     type: [String],
     default: [],
   },
+    
+  
 }); //schema es una clase que nos permite crear esquemas para la base de datos
 
 module.exports = mongoose.model("User", userSchema); //exportamos el modelo de usuario para poder utilizarlo en otros archivos
